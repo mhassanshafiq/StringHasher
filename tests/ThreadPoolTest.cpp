@@ -9,10 +9,12 @@ TEST(ThreadPoolTest, BasicFunctionality) {
 
     auto task = [&counter]() {
         counter.fetch_add(1);
+        return false;
     };
 
     auto task_ = [&counter]() {
         counter.fetch_sub(1);
+        return false;
     };
 
     // Enqueue tasks
@@ -38,6 +40,7 @@ TEST(ThreadPoolTest, EmptyThreadPool) {
 
     auto task = [&counter]() {
         counter.fetch_add(1);
+        return false;
     };
 
     // Enqueue tasks

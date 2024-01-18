@@ -5,26 +5,32 @@ protected:
     MockHashCalculator hashCalculator;
     ClientHandler clientHandler;
 
-    // Mock recv function for testing
     static ssize_t MockRecv(int clientSocket, void* buffer, size_t size, int flags) {
         const std::string testMessage = "The brown fox\r\n";
         strncpy(static_cast<char*>(buffer), testMessage.c_str(), size);
         return testMessage.length();
     }
 
-    // Mock send function for testing
-    static ssize_t MockSend(int clientSocket, const void* buffer, size_t size, int flags) {
-        return size;  // Assuming successful send for simplicity
+    static ssize_t MockSelect(int clientSocket, fd_set* readfds, fd_set* writefds, fd_set* exceptfds, timeval* timeout) {
+       
+        return 1;
     }
 
-    // Mock recv function for testing
+    static ssize_t MockSend(int clientSocket, const void* buffer, size_t size, int flags) {
+        return size;
+    }
+
     static ssize_t MockRecvError(int clientSocket, void* buffer, size_t size, int flags) {
         return -1;
     }
 
-    // Mock send function for testing
+    static ssize_t MockSelectError(int clientSocket, fd_set* readfds, fd_set* writefds, fd_set* exceptfds, timeval* timeout) {
+
+        return -1;
+    }
+
     static ssize_t MockSendError(int clientSocket, const void* buffer, size_t size, int flags) {
-        return -1;  // Assuming successful send for simplicity
+        return -1;
     }
 };
 
@@ -34,7 +40,7 @@ TEST_F(ClientHandlerTest, HandleWithSHA) {
     EXPECT_CALL(hashCalculator, calculateSHA(clientInput)).Times(1);
     EXPECT_CALL(hashCalculator, calculateSTL(testing::_)).Times(0);
 
-    clientHandler.handle(0, std::bind(&MockHashCalculator::calculateSHA, &hashCalculator, clientInput), MockRecv, MockSend);
+    clientHandler.handle(0, std::bind(&MockHashCalculator::calculateSHA, &hashCalculator, clientInput), MockRecv, MockSend, MockSelect);
 
 }
 
@@ -44,7 +50,7 @@ TEST_F(ClientHandlerTest, HandleWithSTL) {
     EXPECT_CALL(hashCalculator, calculateSTL(clientInput)).Times(1);
     EXPECT_CALL(hashCalculator, calculateSHA(testing::_)).Times(0);
 
-    clientHandler.handle(0, std::bind(&MockHashCalculator::calculateSTL, &hashCalculator, clientInput), MockRecv, MockSend);
+    clientHandler.handle(0, std::bind(&MockHashCalculator::calculateSTL, &hashCalculator, clientInput), MockRecv, MockSend, MockSelect);
 
 }
 
@@ -54,7 +60,7 @@ TEST_F(ClientHandlerTest, HandleSendError) {
     EXPECT_CALL(hashCalculator, calculateSHA(clientInput)).Times(1);
     EXPECT_CALL(hashCalculator, calculateSTL(testing::_)).Times(0);
 
-    clientHandler.handle(0, std::bind(&MockHashCalculator::calculateSHA, &hashCalculator, clientInput), MockRecv, MockSendError);
+    clientHandler.handle(0, std::bind(&MockHashCalculator::calculateSHA, &hashCalculator, clientInput), MockRecv, MockSendError, MockSelect);
 
 }
 
@@ -64,6 +70,26 @@ TEST_F(ClientHandlerTest, HandleRecvError) {
     EXPECT_CALL(hashCalculator, calculateSTL(clientInput)).Times(0);
     EXPECT_CALL(hashCalculator, calculateSHA(testing::_)).Times(0);
 
-    clientHandler.handle(0, std::bind(&MockHashCalculator::calculateSTL, &hashCalculator, clientInput), MockRecvError, MockSend);
+    clientHandler.handle(0, std::bind(&MockHashCalculator::calculateSTL, &hashCalculator, clientInput), MockRecvError, MockSend, MockSelect);
+
+}
+
+TEST_F(ClientHandlerTest, HandleSelect) {
+    std::string clientInput = "The brown fox\r\n";
+
+    EXPECT_CALL(hashCalculator, calculateSHA(clientInput)).Times(1);
+    EXPECT_CALL(hashCalculator, calculateSTL(testing::_)).Times(0);
+
+    clientHandler.handle(0, std::bind(&MockHashCalculator::calculateSHA, &hashCalculator, clientInput), MockRecv, MockSend, MockSelect);
+
+}
+
+TEST_F(ClientHandlerTest, HandleSelectError) {
+    std::string clientInput = "The brown fox\r\n";
+
+    EXPECT_CALL(hashCalculator, calculateSHA(clientInput)).Times(0);
+    EXPECT_CALL(hashCalculator, calculateSTL(testing::_)).Times(0);
+
+    clientHandler.handle(0, std::bind(&MockHashCalculator::calculateSHA, &hashCalculator, clientInput), MockRecv, MockSend, MockSelectError);
 
 }
