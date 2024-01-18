@@ -1,21 +1,42 @@
 #include "ClientHandler.h"
 #include <iostream>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <string.h>
 
-
-void ClientHandler::handle(int clientSocket, const HashFunction hasher) {
-    handle(clientSocket, hasher, recv, send);
+bool ClientHandler::Close(int clientSocket) { 
+    close(clientSocket); 
+    return false; 
 }
-void ClientHandler::handle(int clientSocket, const HashFunction hasher, RecvFunction recvFunc, SendFunction sendFunc) {
+
+bool ClientHandler::handle(int clientSocket, const HashFunction hasher) {
+    return handle(clientSocket, hasher, recv, send, select);
+}
+
+bool ClientHandler::handle(int clientSocket, const HashFunction hasher, RecvFunction recvFunc, SendFunction sendFunc, SelectFunction selectFunc) {
     char buffer[BUFFER_SIZE];
     std::string data;
+    const int timeoutMicroSeconds = 100000;
+
+    fd_set readSet;
+    FD_ZERO(&readSet);
+    FD_SET(clientSocket, &readSet);
+
+    timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = timeoutMicroSeconds;
+
+    int result = selectFunc(clientSocket + 1, &readSet, nullptr, nullptr, &timeout);
+
+    if (result == -1) {
+        std::cerr << "Error in select" << std::endl;
+        return ClientHandler::Close(clientSocket);
+    }
+    else if (result == 0) {
+        return true;
+    }
 
     while (true) {
         ssize_t bytesReceived = recvFunc(clientSocket, buffer, sizeof(buffer), 0);
         if (bytesReceived <= 0) {
-            break;
+            return ClientHandler::Close(clientSocket);
         }
 
         data.append(buffer, bytesReceived);
@@ -37,6 +58,5 @@ void ClientHandler::handle(int clientSocket, const HashFunction hasher, RecvFunc
             break;
         }
     }
-
-    close(clientSocket);
+    return ClientHandler::Close(clientSocket);
 }

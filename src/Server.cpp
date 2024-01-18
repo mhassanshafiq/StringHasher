@@ -117,10 +117,17 @@ void Server::ServerImpl::acceptClients(int serverSocket, const std::string& hash
             std::cout << "[INFO] Accepted connection from " << inet_ntoa(clientAddress.sin_addr) << std::endl;
 
             // Add the client socket to the thread pool for processing
-            threadPool->enqueue([clientHandler = this->clientHandler, clientSocket, hashType]() {
+            /*threadPool->enqueue([clientHandler = this->clientHandler, clientSocket, hashType]() {
                 auto hasher = hashType == "SHA" ? HashCalculator::calculateSHA : HashCalculator::calculateSTL;
                 clientHandler ? clientHandler->handle(clientSocket, hasher) : ClientHandler::handle(clientSocket, hasher);
-                });
+                });*/
+            std::function<bool()> task = [clientHandler = this->clientHandler, clientSocket, hashType]() {
+                auto hasher = hashType == "SHA" ? HashCalculator::calculateSHA : HashCalculator::calculateSTL;
+                return clientHandler ? clientHandler->handle(clientSocket, hasher) : ClientHandler::handle(clientSocket, hasher);
+            };
+
+            // Enqueue the task to the thread pool
+            threadPool->enqueue(task);
         }
     }
     catch (const std::exception& e) {

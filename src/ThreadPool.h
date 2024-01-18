@@ -14,14 +14,14 @@ public:
 
     void start();
     void stop();
-    void enqueue(std::function<void()> task);
+    void enqueue(std::function<bool()> task);
 
 private:
     void worker();
 
     int numThreads;
     std::vector<std::thread> threads;
-    std::queue<std::function<void()>> tasks;
+    std::queue<std::function<bool()>> tasks;
     std::mutex mutex;
     std::condition_variable condition;
     bool stopFlag;

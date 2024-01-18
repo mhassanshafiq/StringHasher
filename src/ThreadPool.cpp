@@ -23,9 +23,9 @@ void ThreadPool::stop() {
     }
 }
 
-void ThreadPool::enqueue(std::function<void()> task) {
+void ThreadPool::enqueue(std::function<bool()> task) {
     {
-        std::unique_lock<std::mutex> lock(mutex);
+        std::lock_guard<std::mutex> lock(mutex);
         tasks.push(task);
     }
     condition.notify_one();
@@ -33,7 +33,7 @@ void ThreadPool::enqueue(std::function<void()> task) {
 
 void ThreadPool::worker() {
     while (true) {
-        std::function<void()> task;
+        std::function<bool()> task;
 
         {
             std::unique_lock<std::mutex> lock(mutex);
@@ -48,6 +48,9 @@ void ThreadPool::worker() {
             tasks.pop();
         }
 
-        task();
+        if (task())
+        {
+            enqueue(task);
+        }
     }
 }
