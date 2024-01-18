@@ -1,5 +1,5 @@
 							****************************
-							**		 StringHasher	  **
+							**	StringHasher	  **
 							****************************
 							
 
@@ -7,7 +7,7 @@ The project is a server which will accept connections on a specific port(configu
 accept a string('\n' terminated) and then return a hash(SHA or STL hash calculation).
 
 							************************
-							*		Building       *
+							*	Building       *
 							************************
 src/ directory contains all the code files and tests/ directory contains all the tests.
 To build the code simply run `./build.sh`, this will create a folder `out` and place the
@@ -15,7 +15,7 @@ binary in that folder.
 This script will check and install dependencies as well if needed.
 
 							***********************
-							*		Running		  *
+							*	Running	      *
 							***********************
 To run the solution you can do `./out/HashServer <port> <num_threads> <hash_type (SHA/STL)>`
 The input parameters are to be given in order. For example 
@@ -31,7 +31,7 @@ Default Values of parameters if skipped are as follows;
 <hash_type> -> SHA
 
 							**********************
-							*		Client		 *
+							*	Client	     *
 							**********************
 I have tested the server with a telnet client. Example is given below;
 
@@ -41,7 +41,7 @@ Once connected to server you can send any string and server weill respond back w
 of the string and then close the connection.
 
 							*********************
-							*		Tests		*
+							*	Tests	    *
 							*********************
 Tests are placed in `tests/` directory. In order to build the tests we can run `./tests/build_tests.sh`.
 
